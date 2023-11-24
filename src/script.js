@@ -1,14 +1,15 @@
-var Delta = Quill.import('delta')
+const Delta = Quill.import('delta')
+const Block = Quill.import('blots/block');
 
-/** @link https://github.com/quilljs/quill/issues/1109 */
-const Inline = Quill.import('blots/inline');
 
 /**
  * 
  */
-class QImage extends Inline {
+class QImage extends Block {
+
     static blotName = 'qImage'
-    static tagName = 'q-img-text'
+
+    static tagName = 'q-image-text'
 
     /**
      * 
@@ -16,26 +17,28 @@ class QImage extends Inline {
      * @returns 
      */
     static create(value) {
-        const node = super.create()
 
-        node.innerHTML = `<img src=${value.image} />${value.text}`
+        const node = super.create(value)
+        
+        if (Array.isArray(value)) {
+            throw new Error("value of type Array is not supported")
+        }
+
+        const txt = document.createTextNode(value.text)
+
+        const img = document.createElement('img')
+
+        img.setAttribute("src", value.image)
+
+        node.appendChild(img)
+
+        node.appendChild(txt)
+
+        node.setAttribute("title", "1")
 
         return node
     }
 
-    /**
-     * 
-     * @param {*} node 
-     * @returns 
-     */
-    static value(node) {
-        const img = node.querySelector('img')
-
-        return {
-            image: img.getAttribute('src'),
-            text: node.innerHTML,
-        };
-    }
 }
 
 Quill.register(QImage);
@@ -45,7 +48,7 @@ Quill.register(QImage);
  * @param {*} file 
  * @returns 
  */
-function readFileAsDataURL(file) {
+const readFileAsDataURL = (file) => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
 
@@ -61,6 +64,17 @@ function readFileAsDataURL(file) {
     });
 }
 
+/**
+ * 
+ * @param {*} files 
+ */
+const convertFilesToQImage = async (file) => {
+    return {
+        image: await readFileAsDataURL(file),
+        text: "Your text"
+    }
+}
+
 Quill.register('modules/image', function (quill, options) {
 
     /**
@@ -69,20 +83,21 @@ Quill.register('modules/image', function (quill, options) {
      * @returns 
      */
     const handleImageUpload = async (event) => {
-        for (file of event.target.files) {
-            const imageUrl = await readFileAsDataURL(file);
 
-            const contents = new Delta().retain(quill.getSelection().index).insert({
-                qImage: {
-                    image: imageUrl,
-                    text: "123"
-                }
-            })
+        const selection = quill.getSelection()
 
-            quill.updateContents(contents)
-        }        
+        const [file] = event.target.files
+
+        const contents = new Delta().retain(selection.index).insert({
+            qImage: await convertFilesToQImage(file)
+        })
+
+        quill.updateContents(contents) 
     }
 
+    /**
+     * 
+     */
     const imageHandler = () => {
         const fileInput = document.createElement('input');
 
@@ -105,11 +120,50 @@ var editor = new Quill('#editor', {
     }
 });
 
+/**
+ * 
+ * @param {*} event 
+ */
+const handleFileSelect = async (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+
+    const [file] = event.dataTransfer.files
+
+    const contents = new Delta().retain(0).insert({
+        qImage: await convertFilesToQImage(file)
+    })
+
+    editor.updateContents(contents) 
+}
+
+/**
+ * 
+ * @param {*} event 
+ */
+const handleDragOver = (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+}
+
+
+const dropZone = document.getElementById('editor');
+dropZone.addEventListener('dragover', handleDragOver, false);
+dropZone.addEventListener('drop', handleFileSelect, false);
+
 // var Delta = Quill.import('delta')
 
-// editor.updateContents(new Delta().retain(10).insert({
-//     qImage: {
-//         image: "https://fastly.picsum.photos/id/1035/200/300.jpg?hmac=744aBtkMLjfDyn2TzkMxsFzw2T0L57TMlNGFlX-Qgq0",
-//         text: "123"
-//     }
-// }))
+editor.updateContents(new Delta().retain(0).insert({
+    qImage: {
+        image: "https://fastly.picsum.photos/id/1035/200/300.jpg?hmac=744aBtkMLjfDyn2TzkMxsFzw2T0L57TMlNGFlX-Qgq0",
+        text: "123"
+    }
+}))
+
+editor.updateContents(new Delta().retain(0).insert({
+    qImage: {
+        image: "https://fastly.picsum.photos/id/1035/200/300.jpg?hmac=744aBtkMLjfDyn2TzkMxsFzw2T0L57TMlNGFlX-Qgq0",
+        text: "123"
+    }
+}))
