@@ -4,21 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <link href="style.css" rel="stylesheet" />
+    <title>Editor Task 2023</title>
 </head>
 
 <body>
-    <!-- Include Quill stylesheet -->
     <link href="https://cdn.quilljs.com/1.0.0/quill.snow.css" rel="stylesheet" />
-    
-    <!-- Create the toolbar container -->
-    <div id="toolbar">
-        <button class="ql-image"></button>
+    <div class="container">
+        <h1 class="title">Editor Task</h1>
+        <div id="toolbar">
+            <button class="ql-image"></button>
+        </div>
+        
+        <div id="editor"></div>
     </div>
-    
-    <!-- Create the editor container -->
-    <div id="editor"></div>
-    <!-- <input type="file" multiple /> -->
 
     <script src="https://cdn.quilljs.com/1.0.0/quill.js"></script>
     <script src="./src/script.js"></script>
